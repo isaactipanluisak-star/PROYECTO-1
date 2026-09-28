@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorio de Derivadas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <p class="tag">PROYECTO 1</p>
+      <h1>Laboratorio de Derivadas</h1>
+      <p class="subtitle">
+        Escribe una función polinómica y un valor de <strong>x</strong>.
+        La aplicación aplicará las reglas básicas de derivación.
+      </p>
+
+      <div class="input-group">
+        <label for="functionInput">Función f(x)</label>
+        <input id="functionInput" type="text" value="3x^2 + 2x - 5"
+               placeholder="Ejemplo: 3x^2 + 2x - 5">
+        <small>Usa x, potencias con ^ y términos separados por + o -.</small>
+      </div>
+
+      <div class="input-group">
+        <label for="xInput">Valor de x</label>
+        <input id="xInput" type="number" value="2" step="any">
+      </div>
+
+      <button id="calculateButton">Calcular derivada</button>
+
+      <p id="errorMessage" class="error"></p>
+
+      <section id="result" class="result hidden">
+        <div class="result-box">
+          <span>Función original</span>
+          <strong id="originalFunction"></strong>
+        </div>
+
+        <div class="result-box">
+          <span>Derivada</span>
+          <strong id="derivativeFunction"></strong>
+        </div>
+
+        <div class="result-box highlight">
+          <span>Pendiente en el punto</span>
+          <strong id="slope"></strong>
+        </div>
+
+        <div class="steps">
+          <h2>Cómo se derivó</h2>
+          <div id="stepsList"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="info-card">
+      <h2>Reglas utilizadas</h2>
+      <div class="rules">
+        <div><span>1</span><p>La derivada de una constante es <strong>0</strong>.</p></div>
+        <div><span>2</span><p>La derivada de <strong>x</strong> es <strong>1</strong>.</p></div>
+        <div><span>3</span><p>Para <strong>axⁿ</strong>, usamos <strong>anxⁿ⁻¹</strong>.</p></div>
+        <div><span>4</span><p>La derivada de una suma o resta se calcula término por término.</p></div>
+      </div>
+      <p class="example">Ejemplo: 3x² + 2x - 5 → 6x + 2</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
