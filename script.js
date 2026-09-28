@@ -9,45 +9,20 @@ const derivativeFunction = document.getElementById("derivativeFunction");
 const slope = document.getElementById("slope");
 const stepsList = document.getElementById("stepsList");
 
-// Convierte x, x^n y ax^n en una estructura fácil de usar.
 function parseTerm(term) {
   const cleanTerm = term.replace(/\s+/g, "");
+  if (!cleanTerm) return null;
 
-  if (!cleanTerm) {
-    return null;
-  }
-
-  // Constante: por ejemplo, 7 o -7
   if (/^[+-]?\d+(\.\d+)?$/.test(cleanTerm)) {
-    return {
-      coefficient: Number(cleanTerm),
-      exponent: 0
-    };
+    return { coefficient: Number(cleanTerm), exponent: 0 };
   }
 
-  // x o -x
-  const simpleX = cleanTerm.match(/^([+-]?)(x)$/i);
-  if (simpleX) {
-    return {
-      coefficient: simpleX[1] === "-" ? -1 : 1,
-      exponent: 1
-    };
-  }
-
-  // ax^n, ax o x^n
   const power = cleanTerm.match(/^([+-]?\d*\.?\d*)x(?:\^(\d+))?$/i);
-
-  if (!power) {
-    throw new Error("No pude reconocer el término: " + term);
-  }
+  if (!power) throw new Error("No pude reconocer el término: " + term);
 
   let coefficientText = power[1];
-
-  if (coefficientText === "" || coefficientText === "+") {
-    coefficientText = "1";
-  } else if (coefficientText === "-") {
-    coefficientText = "-1";
-  }
+  if (coefficientText === "" || coefficientText === "+") coefficientText = "1";
+  else if (coefficientText === "-") coefficientText = "-1";
 
   return {
     coefficient: Number(coefficientText),
@@ -55,26 +30,17 @@ function parseTerm(term) {
   };
 }
 
-// Separa una función en términos.
-// Ejemplo: 3x^2 + 2x - 5 -> 3x^2, +2x, -5
 function parseFunction(expression) {
   let clean = expression.replace(/\s+/g, "");
-
-  if (!clean) {
-    throw new Error("Escribe una función.");
-  }
+  if (!clean) throw new Error("Escribe una función.");
 
   clean = clean.replace(/-/g, "+-");
-  if (clean.startsWith("+-")) {
-    clean = clean.slice(1);
-  }
+  if (clean.startsWith("+-")) clean = clean.slice(1);
 
-  const parts = clean.split("+").filter(Boolean);
-
-  return parts.map(parseTerm);
+  return clean.split("+").filter(Boolean).map(parseTerm);
 }
 
-// Aplica la regla de la potencia término por término.
+// Regla general: d/dx(ax^n) = a*n*x^(n-1)
 function deriveTerm(term) {
   if (term.exponent === 0) {
     return {
@@ -91,8 +57,7 @@ function deriveTerm(term) {
     coefficient: newCoefficient,
     exponent: newExponent,
     explanation:
-      `${formatTerm(term)} → ${formatNumber(newCoefficient)}x^${newExponent} `
-      + ` usando an xⁿ⁻¹`
+      `${formatTerm(term)} → ${formatNumber(newCoefficient)}x^${newExponent} usando la regla de la potencia`
   };
 }
 
@@ -109,76 +74,51 @@ function formatTerm(term) {
   const sign = coefficient < 0 ? "-" : "";
   const absolute = Math.abs(coefficient);
 
-  if (exponent === 0) {
-    return sign + formatNumber(absolute);
-  }
+  if (exponent === 0) return sign + formatNumber(absolute);
 
-  let coefficientPart = "";
-  if (absolute !== 1) {
-    coefficientPart = formatNumber(absolute);
-  }
+  let coefficientPart = absolute === 1 ? "" : formatNumber(absolute);
 
-  if (exponent === 1) {
-    return sign + coefficientPart + "x";
-  }
-
+  if (exponent === 1) return sign + coefficientPart + "x";
   return sign + coefficientPart + "x^" + exponent;
 }
 
 function formatPolynomial(terms) {
   const visibleTerms = terms.filter(term => term.coefficient !== 0);
+  if (visibleTerms.length === 0) return "0";
 
-  if (visibleTerms.length === 0) {
-    return "0";
-  }
-
-  let output = "";
-
-  visibleTerms.forEach((term, index) => {
+  return visibleTerms.map((term, index) => {
     const text = formatTerm(term);
-
-    if (index === 0) {
-      output += text;
-      return;
-    }
-
-    if (text.startsWith("-")) {
-      output += " - " + text.slice(1);
-    } else {
-      output += " + " + text;
-    }
-  });
-
-  return output;
+    if (index === 0) return text;
+    return text.startsWith("-") ? " - " + text.slice(1) : " + " + text;
+  }).join("");
 }
 
-function evaluatePolynomial(terms, x) {
-  return terms.reduce((total, term) => {
-    return total + term.coefficient * Math.pow(x, term.exponent);
-  }, 0);
+function evaluatePolynomial(terms, value) {
+  return terms.reduce(
+    (total, term) => total + term.coefficient * Math.pow(value, term.exponent),
+    0
+  );
 }
 
 calculateButton.addEventListener("click", () => {
   try {
     errorMessage.textContent = "";
 
-    const expression = functionInput.value;
-    const x = Number(xInput.value);
+    const terms = parseFunction(functionInput.value);
+    const valueX = Number(xInput.value);
 
-    if (!Number.isFinite(x)) {
+    if (!Number.isFinite(valueX)) {
       throw new Error("Introduce un valor numérico para x.");
     }
 
-    const terms = parseFunction(expression);
     const derivativeTerms = terms.map(deriveTerm);
-
     const derivative = derivativeTerms.filter(term => term.coefficient !== 0);
 
     originalFunction.textContent = "f(x) = " + formatPolynomial(terms);
     derivativeFunction.textContent = "f'(x) = " + formatPolynomial(derivative);
 
-    const derivativeValue = evaluatePolynomial(derivative, x);
-    slope.textContent = derivativeValue.toFixed(4).replace(/\.0000$/, "");
+    const derivativeValue = evaluatePolynomial(derivative, valueX);
+    slope.textContent = formatNumber(derivativeValue);
 
     stepsList.innerHTML = derivativeTerms
       .map(term => `<div class="step">${term.explanation}</div>`)
@@ -191,5 +131,4 @@ calculateButton.addEventListener("click", () => {
   }
 });
 
-// Calcula el ejemplo al abrir la página.
 calculateButton.click();
