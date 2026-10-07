@@ -34,10 +34,24 @@ function parseFunction(expression) {
   let clean = expression.replace(/\s+/g, "");
   if (!clean) throw new Error("Escribe una función.");
 
+  // Rechaza operadores repetidos o incompletos, por ejemplo: x++2, x--2 o x+-2.
+  if (/\+\+|--|\+-|-\+/.test(clean)) {
+    throw new Error("La expresión está incompleta. Revisa los signos + y -.");
+  }
+
+  if (clean.startsWith("+")) {
+    throw new Error("La expresión está incompleta. No puede comenzar con +.");
+  }
+
   clean = clean.replace(/-/g, "+-");
   if (clean.startsWith("+-")) clean = clean.slice(1);
 
-  return clean.split("+").filter(Boolean).map(parseTerm);
+  const parts = clean.split("+");
+  if (parts.some(part => !part)) {
+    throw new Error("La expresión está incompleta. Revisa los signos + y -.");
+  }
+
+  return parts.map(parseTerm);
 }
 
 // Regla general: d/dx(ax^n) = a*n*x^(n-1)
@@ -100,11 +114,17 @@ function evaluatePolynomial(terms, value) {
   );
 }
 
-calculateButton.addEventListener("click", () => {
+function calculateDerivative() {
   try {
     errorMessage.textContent = "";
 
     const terms = parseFunction(functionInput.value);
+
+    // No usar 0 automáticamente cuando x está vacío.
+    if (xInput.value.trim() === "") {
+      throw new Error("Introduce un valor para x.");
+    }
+
     const valueX = Number(xInput.value);
 
     if (!Number.isFinite(valueX)) {
@@ -121,7 +141,7 @@ calculateButton.addEventListener("click", () => {
     slope.textContent = formatNumber(derivativeValue);
 
     stepsList.innerHTML = derivativeTerms
-      .map(term => `<div class="step">${term.explanation}</div>`)
+      .map(term => "<div class=\"step\">" + term.explanation + "</div>")
       .join("");
 
     result.classList.remove("hidden");
@@ -129,6 +149,18 @@ calculateButton.addEventListener("click", () => {
     result.classList.add("hidden");
     errorMessage.textContent = error.message;
   }
-});
+}
 
-calculateButton.click();
+calculateButton.addEventListener("click", calculateDerivative);
+
+// Permite calcular presionando Enter desde cualquiera de los campos.
+function handleEnter(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    calculateDerivative();
+  }
+}
+
+functionInput.addEventListener("keydown", handleEnter);
+xInput.addEventListener("keydown", handleEnter);
+
